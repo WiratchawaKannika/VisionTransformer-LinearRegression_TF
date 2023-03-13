@@ -41,7 +41,7 @@ def main():
     my_parser = argparse.ArgumentParser()
     my_parser.add_argument('--epochs', type=int, default=200, help='number of epochs to train our network for')
     my_parser.add_argument('--gpu', type=int, default=1, help='Number GPU 0,1')
-    my_parser.add_argument('--data_path', type=str, default='/home/kannika/codes_AI/Rheology2023/datasetMSDT_train_valid.csv')
+    my_parser.add_argument('--data_path', type=str, default='/home/kannika/CSV/datasetMSDT_train_valid.csv')
     my_parser.add_argument('--save_dir', type=str, help='Path to Save output training model')
     my_parser.add_argument('--name', type=str, help='Name to save output in save_dir')
     my_parser.add_argument('--lr', type=float, default=1e-4)
@@ -105,8 +105,8 @@ def main():
                                                      factor = 0.2,
                                                      patience = 5,
                                                      verbose = 1,
-                                                     min_delta = 1e-5,
-                                                     min_lr = 1e-6,
+                                                     min_delta = 1e-4,
+                                                     min_lr = 1e-5,
                                                      mode = 'auto')
 
 

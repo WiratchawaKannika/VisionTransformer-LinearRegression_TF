@@ -68,9 +68,8 @@ def build_Functional_model(fine_tune, image_size):
         print('[INFO]: Freezing hidden layers...')
         for layer in vit_model.layers:
             layer.trainable = False
-
-    print('This is the number of trainable layers '
-              'after freezing the conv base:', len(model.trainable_weights))
+        print('This is the number of trainable layers '
+                  'after freezing the conv base:', len(model.trainable_weights))
     print('-'*100)
 
     return model

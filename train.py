@@ -85,7 +85,7 @@ def main():
     tensorboard_cb = callbacks_.TensorBoard(log_dir=run_logdir)
     
     ### Create Model 
-    model = build_Functional_model(fine_tune=False, image_size = IMAGE_SIZE)
+    model = build_Sequential_model(fine_tune=False, image_size = IMAGE_SIZE)
     model.summary()
     print('='*100)
     

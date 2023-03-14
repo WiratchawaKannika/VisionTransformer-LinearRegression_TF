@@ -41,7 +41,7 @@ def build_model(fine_tune, image_size):
     return model
 
 
-def build_Functional_model(fine_tune, image_size):
+def build_Sequential_model(fine_tune, image_size):
     """
     :param fine_tune (bool): Whether to train the hidden layers or not.
     """

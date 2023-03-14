@@ -44,6 +44,7 @@ def main():
     my_parser.add_argument('--data_path', type=str, default='/home/kannika/CSV/datasetMSDT_train_valid.csv')
     my_parser.add_argument('--save_dir', type=str, help='Path to Save output training model')
     my_parser.add_argument('--name', type=str, help='Name to save output in save_dir')
+    my_parser.add_argument('--R', type=int, help='1 or 2 : 1=R1, 2=R2')
     my_parser.add_argument('--lr', type=float, default=1e-4)
     my_parser.add_argument('--size', type=int, default=224)
     my_parser.add_argument('--batchsize', type=int, default=16)
@@ -60,7 +61,9 @@ def main():
     ## get my_parser
     save_dir = args.save_dir
     name = args.name
-    root_base = f'{save_dir}/{name}/R1'
+    R = args.R
+    _R = f'R{R}'
+    root_base = f'{save_dir}/{name}/{_R}'
     os.makedirs(root_base, exist_ok=True)
     data_path = args.data_path
     IMAGE_SIZE = args.size
@@ -85,7 +88,8 @@ def main():
     tensorboard_cb = callbacks_.TensorBoard(log_dir=run_logdir)
     
     ### Create Model 
-    model = build_Sequential_model(fine_tune=False, image_size = IMAGE_SIZE)
+    #model = build_Sequential_model(fine_tune=False, image_size = IMAGE_SIZE)
+    model = build_Functional_model(fine_tune=False, image_size = IMAGE_SIZE)
     model.summary()
     print('='*100)
     
@@ -121,7 +125,7 @@ def main():
     
     modelNamemkdir = f"{root_base}/models"
     os.makedirs(modelNamemkdir, exist_ok=True)
-    Model2save = f'{modelNamemkdir}/modelRegress_ViT_l32_Rheology_R1.h5'
+    Model2save = f'{modelNamemkdir}/modelRegress_ViT_l32_Rheology_{_R}.h5'
     
     ## Fit model
     model.fit(x = avoid_error(train_generator),
@@ -133,7 +137,7 @@ def main():
     model.save(Model2save)
     ### print
     print(f"Save Linear regression Vitsiontranformer as: {Model2save}")
-    print(f"***"*100)
+    print(f"*"*100)
     
 
     

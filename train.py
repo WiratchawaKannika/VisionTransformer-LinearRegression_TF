@@ -11,7 +11,7 @@ from tensorflow.keras import callbacks as callbacks_
 from tensorflow.keras import layers
 from keras import models
 from DataLoader import Data_generator
-from Vit_model import build_model, build_Functional_model
+from Vit_model import build_model, build_Functional_model, loadresumemodel
 from tensorflow.keras import callbacks
 from keras.callbacks import Callback
 import imageio
@@ -48,6 +48,8 @@ def main():
     my_parser.add_argument('--lr', type=float, default=1e-4)
     my_parser.add_argument('--size', type=int, default=224)
     my_parser.add_argument('--batchsize', type=int, default=16)
+    my_parser.add_argument('--resume', action='store_true')
+    my_parser.add_argument('--checkpoint_dir', type=str ,default=".")
     
     args = my_parser.parse_args()
     
@@ -88,8 +90,11 @@ def main():
     tensorboard_cb = callbacks_.TensorBoard(log_dir=run_logdir)
     
     ### Create Model 
+    if args.resume :
+        input_shape, model = loadresumemodel(args.checkpoint_dir)
+    else:    
     #model = build_Sequential_model(fine_tune=False, image_size = IMAGE_SIZE)
-    model = build_Functional_model(fine_tune=False, image_size = IMAGE_SIZE)
+        model = build_Functional_model(fine_tune=False, image_size = IMAGE_SIZE)
     model.summary()
     print('='*100)
     
@@ -123,6 +128,14 @@ def main():
 
     callbacks = [reduce_lr, checkpointer]
     
+    ## set up save Checkpoint every epoch
+    save_checkpoin_callback = f"{root_base}/checkpoin_callback"
+    os.makedirs(save_checkpoin_callback, exist_ok=True)
+    model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(filepath=save_checkpoin_callback, 
+                                                                   save_freq='epoch', ave_weights_only=False, monitor="val_mean_absolute_percentage_error")
+    
+    
+    ## Set up model path
     modelNamemkdir = f"{root_base}/models"
     os.makedirs(modelNamemkdir, exist_ok=True)
     Model2save = f'{modelNamemkdir}/modelRegress_ViT_l32_Rheology_{_R}.h5'
@@ -133,7 +146,7 @@ def main():
               validation_data = val_generator,
               validation_steps = STEP_SIZE_VALID,
               epochs = EPOCHS,
-              callbacks = [tensorboard_cb, callbacks])
+              callbacks = [tensorboard_cb, callbacks, save_checkpoin_callback])
     model.save(Model2save)
     ### print
     print(f"Save Linear regression Vitsiontranformer as: {Model2save}")

@@ -6,6 +6,7 @@ from tensorflow.keras import callbacks as callbacks_
 from tensorflow.keras import layers
 from keras import models
 from vit_keras import vit, utils
+from tensorflow.keras.models import load_model
 
 
 
@@ -108,6 +109,13 @@ def build_Functional_model(fine_tune, image_size):
 
     return model
 
+
+def loadresumemodel(model_dir):
+    model = load_model(model_dir)
+    height = width = model.input_shape[1]
+    input_shape = (height, width, 3)
+    
+    return input_shape, model
 
 
             

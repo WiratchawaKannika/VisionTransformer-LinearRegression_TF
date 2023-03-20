@@ -7,7 +7,6 @@ import glob, warnings
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, classification_report
 import seaborn as sns
-from tensorflow.keras import callbacks as callbacks_
 from tensorflow.keras import layers
 from keras import models
 from DataLoader import Data_generator
@@ -87,7 +86,7 @@ def main():
     os.makedirs(root_logdir, exist_ok=True)
     ### Run TensorBoard 
     run_logdir = get_run_logdir(root_logdir)
-    tensorboard_cb = callbacks_.TensorBoard(log_dir=run_logdir)
+    tensorboard_cb = callbacks.TensorBoard(log_dir=run_logdir)
     
     ### Create Model 
     if args.resume :
@@ -107,26 +106,26 @@ def main():
     STEP_SIZE_VALID = val_generator.n // val_generator.batch_size
     
     
-    save_checkpoin = f"{root_base}/checkpointer"
-    os.makedirs(save_checkpoin, exist_ok=True)
-    ## reduce_lr, checkpointer ต้องเปลี่ยนใหม่
-    reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(monitor = 'val_loss',  
-                                                     factor = 0.2,
-                                                     patience = 5,
-                                                     verbose = 1,
-                                                     min_delta = 1e-4,
-                                                     min_lr = 1e-5,
-                                                     mode = 'auto')
+#     save_checkpoin = f"{root_base}/checkpointer"
+#     os.makedirs(save_checkpoin, exist_ok=True)
+#     ## reduce_lr, checkpointer ต้องเปลี่ยนใหม่
+#     reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(monitor = 'val_loss',  
+#                                                      factor = 0.2,
+#                                                      patience = 5,
+#                                                      verbose = 1,
+#                                                      min_delta = 1e-4,
+#                                                      min_lr = 1e-5,
+#                                                      mode = 'auto')
 
 
-    checkpointer = tf.keras.callbacks.ModelCheckpoint(filepath = f'{save_checkpoin}/modelRegress_ViT_l32_Rheology.hdf5',
-                                                      monitor = 'val_loss', 
-                                                      verbose = 1, 
-                                                      save_best_only = True,
-                                                      save_weights_only = True,
-                                                      mode = 'auto')
+#     checkpointer = tf.keras.callbacks.ModelCheckpoint(filepath = f'{save_checkpoin}/modelRegress_ViT_l32_Rheology.hdf5',
+#                                                       monitor = 'val_loss', 
+#                                                       verbose = 1, 
+#                                                       save_best_only = True,
+#                                                       save_weights_only = True,
+#                                                       mode = 'auto')
 
-    callbacks = [reduce_lr, checkpointer]
+#     callbacks = [reduce_lr, checkpointer]
     
     ## set up save Checkpoint every epoch
     save_checkpoin_callback = f"{root_base}/checkpoin_callback"
@@ -146,7 +145,8 @@ def main():
               validation_data = val_generator,
               validation_steps = STEP_SIZE_VALID,
               epochs = EPOCHS,
-              callbacks = [tensorboard_cb, callbacks, save_checkpoin_callback])
+              callbacks = [tensorboard_cb, model_checkpoint_callback])
+    
     model.save(Model2save)
     ### print
     print(f"Save Linear regression Vitsiontranformer as: {Model2save}")

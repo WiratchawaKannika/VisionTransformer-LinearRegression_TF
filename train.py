@@ -16,6 +16,8 @@ from keras.callbacks import Callback
 import imageio
 from keras.optimizers import Adam
 import argparse
+#load Check point
+from tensorflow.keras.models import load_model
 
 
 
@@ -40,8 +42,8 @@ def main():
     my_parser = argparse.ArgumentParser()
     my_parser.add_argument('--epochs', type=int, default=200, help='number of epochs to train our network for')
     my_parser.add_argument('--gpu', type=int, default=1, help='Number GPU 0,1')
-    my_parser.add_argument('--data_path', type=str, default='/home/kannika/CSV/datasetMSDT_train_valid.csv')
-    my_parser.add_argument('--save_dir', type=str, help='Path to Save output training model')
+    my_parser.add_argument('--data_path', type=str, default='/home/kannika/codes_AI/Rheology2023/datasetMSDT_train_valid.csv')
+    my_parser.add_argument('--save_dir', type=str, help='Main Path to Save output training model')
     my_parser.add_argument('--name', type=str, help='Name to save output in save_dir')
     my_parser.add_argument('--R', type=int, help='1 or 2 : 1=R1, 2=R2')
     my_parser.add_argument('--lr', type=float, default=1e-4)
@@ -49,6 +51,10 @@ def main():
     my_parser.add_argument('--batchsize', type=int, default=16)
     my_parser.add_argument('--resume', action='store_true')
     my_parser.add_argument('--checkpoint_dir', type=str ,default=".")
+    my_parser.add_argument('--tensorName', type=str ,default="Mylogs_tensor")
+    my_parser.add_argument('--checkpointerName', type=str ,default="checkpoin_callback")
+    my_parser.add_argument('--epochendName', type=str ,default="on_epoch_end")
+    my_parser.add_argument('--FmodelsName', type=str ,default="models")
     
     args = my_parser.parse_args()
     
@@ -81,8 +87,8 @@ def main():
     train_generator, val_generator = Data_generator(IMAGE_SIZE, BATCH_SIZE, DF_TRAIN, DF_VAL)
     
     ## Set mkdir TensorBoard 
-    ##root_logdir = f'/media/SSD/rheology2023/VitModel/Regression/tensorflow/ExpTest/R1/Mylogs_tensor/'
-    root_logdir = f"{root_base}/Mylogs_tensor"
+    ## root_logdir = f'/media/SSD/rheology2023/VitModel/Regression/tensorflow/ExpTest/R1/Mylogs_tensor/'
+    root_logdir = f"{root_base}/{args.tensorName}"
     os.makedirs(root_logdir, exist_ok=True)
     ### Run TensorBoard 
     run_logdir = get_run_logdir(root_logdir)
@@ -97,8 +103,26 @@ def main():
     model.summary()
     print('='*100)
     
+    ## Set up model path
+    modelNamemkdir = f"{root_base}/{args.FmodelsName}"
+    os.makedirs(modelNamemkdir, exist_ok=True)
+    modelName  = f"modelRegress_ViT_l32_Rheology_{_R}.h5"
+    Model2save = f'{modelNamemkdir}/{modelName}'
+    
+    root_Metrics = f'{root_base}/{args.epochendName}/'
+    os.makedirs(root_Metrics, exist_ok=True)
+    class Metrics(Callback):
+            def on_epoch_end(self, epochs, logs={}):
+                self.model.save(f'{root_Metrics}{modelName}')
+                return
+    
+    # For tracking Quadratic Weighted Kappa score and saving best weights
+    metrics = Metrics()
+    
+   
+    
     ## Model Complier
-    model.compile(optimizer = Adam(2e-6, decay=1e-6), 
+    model.compile(optimizer = Adam(lr, decay=lr), 
               loss = 'mse', 
               metrics = ['mse'])
     
@@ -128,16 +152,13 @@ def main():
 #     callbacks = [reduce_lr, checkpointer]
     
     ## set up save Checkpoint every epoch
-    save_checkpoin_callback = f"{root_base}/checkpoin_callback"
+    save_checkpoin_callback = f"{root_base}/{args.checkpointerName}"
     os.makedirs(save_checkpoin_callback, exist_ok=True)
     model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(filepath=save_checkpoin_callback, 
                                                                    save_freq='epoch', ave_weights_only=False, monitor="val_mean_absolute_percentage_error")
     
     
-    ## Set up model path
-    modelNamemkdir = f"{root_base}/models"
-    os.makedirs(modelNamemkdir, exist_ok=True)
-    Model2save = f'{modelNamemkdir}/modelRegress_ViT_l32_Rheology_{_R}.h5'
+   
     
     ## Fit model
     model.fit(x = avoid_error(train_generator),
@@ -145,7 +166,7 @@ def main():
               validation_data = val_generator,
               validation_steps = STEP_SIZE_VALID,
               epochs = EPOCHS,
-              callbacks = [tensorboard_cb, model_checkpoint_callback])
+              callbacks = [metrics, tensorboard_cb, model_checkpoint_callback])
     
     model.save(Model2save)
     ### print

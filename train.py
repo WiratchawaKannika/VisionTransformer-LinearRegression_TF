@@ -9,7 +9,8 @@ from sklearn.metrics import confusion_matrix, classification_report
 import seaborn as sns
 from tensorflow.keras import layers
 from keras import models
-from DataLoader import Data_generator
+from DataLoader import Data_generator, split_train_valid ## New function 
+from sklearn.model_selection import train_test_split
 from Vit_model import build_model, build_Functional_model, loadresumemodel
 from tensorflow.keras import callbacks
 from keras.callbacks import Callback
@@ -40,14 +41,15 @@ def avoid_error(gen):
 def main():
      # construct the argument parser
     my_parser = argparse.ArgumentParser()
-    my_parser.add_argument('--epochs', type=int, default=200, help='number of epochs to train our network for')
+    my_parser.add_argument('--epochs', type=int, default=1000, help='number of epochs to train our network for')
     my_parser.add_argument('--gpu', type=int, default=1, help='Number GPU 0,1')
-    my_parser.add_argument('--data_path', type=str, default='/home/kannika/codes_AI/Rheology2023/datasetMSDT_train_valid.csv')
+    my_parser.add_argument('--data_path', type=str, default='/home/kannika/codes_AI/Rheology2023/MSDTGLY7Level10fold_datatrain_tSecond.csv')
     my_parser.add_argument('--save_dir', type=str, help='Main Path to Save output training model')
     my_parser.add_argument('--name', type=str, help='Name to save output in save_dir')
     my_parser.add_argument('--R', type=int, help='1 or 2 : 1=R1, 2=R2')
+    my_parser.add_argument('--fold', type=int, help='1-10')
     my_parser.add_argument('--lr', type=float, default=1e-4)
-    my_parser.add_argument('--size', type=int, default=224)
+    my_parser.add_argument('--size', type=int, default=384)
     my_parser.add_argument('--batchsize', type=int, default=16)
     my_parser.add_argument('--resume', action='store_true')
     my_parser.add_argument('--checkpoint_dir', type=str ,default=".")
@@ -59,6 +61,7 @@ def main():
     args = my_parser.parse_args()
     
     ## set gpu
+    Fold = f"fold{args.fold}"
     gpu = args.gpu
     os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   
     os.environ["CUDA_VISIBLE_DEVICES"] = f"{gpu}" 
@@ -70,7 +73,7 @@ def main():
     name = args.name
     R = args.R
     _R = f'R{R}'
-    root_base = f'{save_dir}/{name}/{_R}'
+    root_base = f'{save_dir}/{name}/{Fold}/{_R}'
     os.makedirs(root_base, exist_ok=True)
     data_path = args.data_path
     IMAGE_SIZE = args.size
@@ -79,10 +82,11 @@ def main():
     lr = args.lr
     EPOCHS = args.epochs
     
-    ## import dataset
+    ## import dataset  
     DF = pd.read_csv(data_path)
-    DF_TRAIN = DF[DF['subset']=='train'].reset_index(drop=True)
-    DF_VAL = DF[DF['subset']=='valid'].reset_index(drop=True)
+    DF_Fold = DF[DF["fold"]!= args.fold].reset_index(drop=True)
+    ## Split train valid set.
+    DF_TRAIN, DF_VAL = split_train_valid(DF_Fold)
     ### Get data Loder
     train_generator, val_generator = Data_generator(IMAGE_SIZE, BATCH_SIZE, DF_TRAIN, DF_VAL)
     
@@ -106,7 +110,7 @@ def main():
     ## Set up model path
     modelNamemkdir = f"{root_base}/{args.FmodelsName}"
     os.makedirs(modelNamemkdir, exist_ok=True)
-    modelName  = f"modelRegress_ViT_l32_Rheology_{_R}.h5"
+    modelName  = f"ViT_l32_RegressMSD_{Fold}_{_R}.h5"
     Model2save = f'{modelNamemkdir}/{modelName}'
     
     root_Metrics = f'{root_base}/{args.epochendName}/'
@@ -170,7 +174,7 @@ def main():
     
     model.save(Model2save)
     ### print
-    print(f"Save Linear regression Vitsiontranformer as: {Model2save}")
+    print(f"Save Linear regression Vitsiontranformer at: {Model2save}")
     print(f"*"*100)
     
 

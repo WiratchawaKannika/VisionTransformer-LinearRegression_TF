@@ -11,7 +11,7 @@ from tensorflow.keras import layers
 from keras import models
 from DataLoader import Data_generator, split_train_valid ## New function 
 from sklearn.model_selection import train_test_split
-from Vit_model import build_model, build_Functional_model, loadresumemodel
+from Vit_model import build_model, build_Functional_ViTb32, loadresumemodel
 from tensorflow.keras import callbacks
 from keras.callbacks import Callback
 import imageio
@@ -54,7 +54,7 @@ def main():
     my_parser.add_argument('--resume', action='store_true')
     my_parser.add_argument('--checkpoint_dir', type=str ,default=".")
     my_parser.add_argument('--tensorName', type=str ,default="Mylogs_tensor")
-    my_parser.add_argument('--checkpointerName', type=str ,default="checkpoin_callback")
+    #my_parser.add_argument('--checkpointerName', type=str ,default="checkpoin_callback")
     my_parser.add_argument('--epochendName', type=str ,default="on_epoch_end")
     my_parser.add_argument('--FmodelsName', type=str ,default="models")
     
@@ -84,9 +84,11 @@ def main():
     
     ## import dataset  
     DF = pd.read_csv(data_path)
-    DF_Fold = DF[DF["fold"]!= args.fold].reset_index(drop=True)
+    #DF_Fold = DF[DF["fold"]!= args.fold].reset_index(drop=True)
     ## Split train valid set.
-    DF_TRAIN, DF_VAL = split_train_valid(DF_Fold)
+    DF_TRAIN = DF[DF["fold"]!= args.fold].reset_index(drop=True)
+    DF_VAL = DF[DF["fold"]== args.fold].reset_index(drop=True)
+    #DF_TRAIN, DF_VAL = split_train_valid(DF_Fold)
     ### Get data Loder
     train_generator, val_generator = Data_generator(IMAGE_SIZE, BATCH_SIZE, DF_TRAIN, DF_VAL)
     
@@ -103,14 +105,15 @@ def main():
         input_shape, model = loadresumemodel(args.checkpoint_dir)
     else:    
     #model = build_Sequential_model(fine_tune=False, image_size = IMAGE_SIZE)
-        model = build_Functional_model(fine_tune=False, image_size = IMAGE_SIZE)
+        #model = build_Functional_model(fine_tune=False, image_size = IMAGE_SIZE)
+        model = build_Functional_ViTb32(fine_tune=False, image_size = IMAGE_SIZE)
     model.summary()
     print('='*100)
     
     ## Set up model path
     modelNamemkdir = f"{root_base}/{args.FmodelsName}"
     os.makedirs(modelNamemkdir, exist_ok=True)
-    modelName  = f"ViT_l32_RegressMSD_{Fold}_{_R}.h5"
+    modelName  = f"ViT_b32_RegressMSD_{Fold}_{_R}.h5"
     Model2save = f'{modelNamemkdir}/{modelName}'
     
     root_Metrics = f'{root_base}/{args.epochendName}/'
@@ -156,10 +159,10 @@ def main():
 #     callbacks = [reduce_lr, checkpointer]
     
     ## set up save Checkpoint every epoch
-    save_checkpoin_callback = f"{root_base}/{args.checkpointerName}"
-    os.makedirs(save_checkpoin_callback, exist_ok=True)
-    model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(filepath=save_checkpoin_callback, 
-                                                                   save_freq='epoch', ave_weights_only=False, monitor="val_mean_absolute_percentage_error")
+#     save_checkpoin_callback = f"{root_base}/{args.checkpointerName}"
+#     os.makedirs(save_checkpoin_callback, exist_ok=True)
+#     model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(filepath=save_checkpoin_callback, 
+#                                                                    save_freq='epoch', ave_weights_only=False, monitor="val_mean_absolute_percentage_error")
     
     
    
@@ -170,7 +173,7 @@ def main():
               validation_data = val_generator,
               validation_steps = STEP_SIZE_VALID,
               epochs = EPOCHS,
-              callbacks = [metrics, tensorboard_cb, model_checkpoint_callback])
+              callbacks = [metrics, tensorboard_cb])
     
     model.save(Model2save)
     ### print

@@ -58,12 +58,9 @@ Function: Data_generator
 
 train_datagen = ImageDataGenerator(
       rescale=1./255,
-      rotation_range=30,
-      width_shift_range=0.2,
-      height_shift_range=0.2,
+      rotation_range=20,
       brightness_range=[0.5,1.5],
       shear_range=0.4,
-      zoom_range=0.2,
       horizontal_flip=False,
       fill_mode='constant')
 

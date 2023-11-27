@@ -18,7 +18,7 @@ def build_model(fine_tune, image_size):
     vit_model = vit.vit_l32(image_size, activation = 'linear', pretrained = True, 
                             include_top = False, pretrained_top = False, classes = 1)
     print('[INFO]: Loading pre-trained weights')
-    x = vit_model.get_layer('ExtractToken').output### add the tail layer ###  
+    x = vit_model.get_layer('ExtractToken').output  ### add the tail layer ###  
     Flatten_layer1 = layers.Flatten()(x)
     BatchNormalization_layer1 = layers.BatchNormalization(name='BatchNormalization_1')(Flatten_layer1)
     Dense_layer1 = layers.Dense(64, activation='gelu',name='Dense_regress')(BatchNormalization_layer1)

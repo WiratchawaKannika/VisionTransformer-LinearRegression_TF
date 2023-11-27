@@ -6,16 +6,16 @@ import tensorflow_addons as tfa
 import glob, warnings
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, classification_report
-import seaborn as sns
 from tensorflow.keras import layers
 from keras import models
 from DataLoader import Data_generator, split_train_valid ## New function 
 from sklearn.model_selection import train_test_split
-from Vit_model import build_model, build_Functional_ViTb32, loadresumemodel
+from Vit_model import build_Functional_model, build_Functional_ViTb32, loadresumemodel
 from tensorflow.keras import callbacks
 from keras.callbacks import Callback
 import imageio
 from keras.optimizers import Adam
+#from keras.optimizers.legacy import Adam
 import argparse
 #load Check point
 from tensorflow.keras.models import load_model
@@ -105,15 +105,15 @@ def main():
         input_shape, model = loadresumemodel(args.checkpoint_dir)
     else:    
     #model = build_Sequential_model(fine_tune=False, image_size = IMAGE_SIZE)
-        #model = build_Functional_model(fine_tune=False, image_size = IMAGE_SIZE)
-        model = build_Functional_ViTb32(fine_tune=False, image_size = IMAGE_SIZE)
+        model = build_Functional_model(fine_tune=False, image_size = IMAGE_SIZE)
+        #model = build_Functional_ViTb32(fine_tune=False, image_size = IMAGE_SIZE)
     model.summary()
     print('='*100)
     
     ## Set up model path
     modelNamemkdir = f"{root_base}/{args.FmodelsName}"
     os.makedirs(modelNamemkdir, exist_ok=True)
-    modelName  = f"ViT_b32_RegressMSD_{Fold}_{_R}.h5"
+    modelName  = f"ViT_l32_RegressMSD_{Fold}_{_R}.h5"  
     Model2save = f'{modelNamemkdir}/{modelName}'
     
     root_Metrics = f'{root_base}/{args.epochendName}/'
@@ -129,7 +129,7 @@ def main():
    
     
     ## Model Complier
-    model.compile(optimizer = Adam(lr, decay=lr), 
+    model.compile(optimizer = Adam(lr, decay=lr), ##tf.keras.optimizers.legacy.Adam
               loss = 'mse', 
               metrics = ['mse'])
     

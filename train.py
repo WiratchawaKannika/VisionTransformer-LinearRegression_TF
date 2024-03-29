@@ -43,6 +43,7 @@ def main():
     my_parser = argparse.ArgumentParser()
     my_parser.add_argument('--epochs', type=int, default=1000, help='number of epochs to train our network for')
     my_parser.add_argument('--gpu', type=int, default=1, help='Number GPU 0,1')
+    my_parser.add_argument('--set4000sr', action='store_true')
     my_parser.add_argument('--data_path', type=str, default='/home/kannika/codes_AI/Rheology2023/MSDTGLY7Level10fold_datatrain_tSecond.csv')
     my_parser.add_argument('--save_dir', type=str, help='Main Path to Save output training model')
     my_parser.add_argument('--name', type=str, help='Name to save output in save_dir')
@@ -101,21 +102,32 @@ def main():
     tensorboard_cb = callbacks.TensorBoard(log_dir=run_logdir)
     
     ### Create Model 
-    if args.resume :
+    if args.resume and args.R == 1:
+        print("**********Load Model R1 Resume**********")
         input_shape, model = loadresumemodel(args.checkpoint_dir)
-    else:    
-    #model = build_Sequential_model(fine_tune=False, image_size = IMAGE_SIZE)
+    elif args.resume and args.R == 2:
+        print("**********Load Model R2 Resume**********")
+        input_shape, model = loadresumemodel(args.checkpoint_dir)
+    elif args.R == 1:
+        print("**********Build VITl32 Model**********")
         model = build_Functional_model(fine_tune=False, image_size = IMAGE_SIZE)
-        #model = build_Functional_ViTb32(fine_tune=False, image_size = IMAGE_SIZE)
+    elif args.R == 2:
+        print("**********Load Model R1 to Train R2 Model**********")
+        input_shape, model = loadresumemodel(args.checkpoint_dir)
     model.summary()
     print('='*100)
     
     ## Set up model path
     modelNamemkdir = f"{root_base}/{args.FmodelsName}"
     os.makedirs(modelNamemkdir, exist_ok=True)
-    modelName  = f"ViT_l32_RegressMSD_{Fold}_{_R}.h5"  
-    Model2save = f'{modelNamemkdir}/{modelName}'
     
+    ## Check GLY set
+    if args.set4000sr :
+        modelName = f'ViT_l32_RegressMSD_GLY7Level4000Serise_{Fold}_{_R}.h5'
+    else: 
+        modelName = f'ViT_l32_RegressMSD_GLY7Level_{Fold}_{_R}.h5'
+        
+    Model2save = f'{modelNamemkdir}/{modelName}'
     root_Metrics = f'{root_base}/{args.epochendName}/'
     os.makedirs(root_Metrics, exist_ok=True)
     class Metrics(Callback):
